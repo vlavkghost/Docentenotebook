@@ -1,0 +1,1238 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <title>Cuaderno Docente NEM - Fichas Individuales</title>
+ <style>
+     :root {
+         --primary: #1e3a8a;
+         --primary-light: #2563eb;
+         --secondary: #0d9488;
+         --bg: #f1f5f9;
+         --surface: #ffffff;
+         --text: #0f172a;
+         --border: #cbd5e1;
+         --success: #16a34a;
+         --warning: #d97706;
+         --danger: #dc2626;
+         --info: #0284c7;
+     }
+
+     * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+     body { background-color: var(--bg); color: var(--text); padding-bottom: 70px; }
+
+     /* REGLAS PARA IMPRESIÓN/DESCARGA A PDF */
+     @media print {
+         body { background: white; padding: 0; margin: 0; }
+         header, nav, #auth-container, .no-print, .btn-action { display: none !important; }
+         main { padding: 0; max-width: 100%; margin: 0; }
+         .section { display: none !important; }
+         .section#ficha { display: block !important; }
+         #ficha-print-area { display: block !important; border: none !important; box-shadow: none !important; margin: 0 !important; padding: 1rem !important; }
+         .card { border: none !important; box-shadow: none !important; }
+     }
+
+     /* ESTILOS DEL FONDO ANIMADO DE AUTENTICACIÓN */
+     #auth-container { 
+         position: fixed; 
+         inset: 0; 
+         z-index: 1000; 
+         display: flex; 
+         align-items: center; 
+         justify-content: center; 
+         padding: 1rem; 
+         overflow: hidden;
+         background: linear-gradient(-45deg, #0f172a, #1e3a8a, #0d9488, #3b82f6);
+         background-size: 400% 400%;
+         animation: gradientBG 12s ease infinite;
+     }
+
+     @keyframes gradientBG {
+         0% { background-position: 0% 50%; }
+         50% { background-position: 100% 50%; }
+         100% { background-position: 0% 50%; }
+     }
+
+     /* Esferas luminosas flotantes (Efecto Blur/Glow) */
+     .bg-glow-1, .bg-glow-2 {
+         position: absolute;
+         border-radius: 50%;
+         filter: blur(80px);
+         opacity: 0.6;
+         animation: floatGlow 8s ease-in-out infinite alternate;
+     }
+
+     .bg-glow-1 {
+         width: 350px;
+         height: 350px;
+         background: #38bdf8;
+         top: -50px;
+         left: -50px;
+     }
+
+     .bg-glow-2 {
+         width: 400px;
+         height: 400px;
+         background: #818cf8;
+         bottom: -80px;
+         right: -80px;
+         animation-delay: -4s;
+     }
+
+     @keyframes floatGlow {
+         0% { transform: translate(0, 0) scale(1); }
+         100% { transform: translate(60px, 40px) scale(1.15); }
+     }
+
+     /* Tarjeta Flotante de Autenticación */
+     .auth-box { 
+         position: relative;
+         z-index: 10;
+         background: rgba(255, 255, 255, 0.92); 
+         backdrop-filter: blur(16px);
+         -webkit-backdrop-filter: blur(16px);
+         padding: 2.2rem 2rem; 
+         border-radius: 16px; 
+         width: 100%; 
+         max-width: 410px; 
+         box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25); 
+         border: 1px solid rgba(255, 255, 255, 0.5);
+         border-top: 5px solid var(--primary-light);
+         animation: authBoxAppear 0.6s ease-out;
+     }
+
+     @keyframes authBoxAppear {
+         from { opacity: 0; transform: translateY(20px) scale(0.95); }
+         to { opacity: 1; transform: translateY(0) scale(1); }
+     }
+
+     .auth-box h2 { color: var(--primary); margin-bottom: 0.25rem; text-align: center; font-size: 1.5rem; font-weight: 800; }
+     .auth-box p { font-size: 0.85rem; color: #475569; margin-bottom: 1.2rem; text-align: center; }
+
+     .auth-tabs {
+         display: flex;
+         margin-bottom: 1.2rem;
+         background: #e2e8f0;
+         border-radius: 8px;
+         padding: 4px;
+     }
+     .auth-tab {
+         flex: 1;
+         padding: 8px;
+         cursor: pointer;
+         border: none;
+         background: none;
+         font-weight: 600;
+         color: #475569;
+         border-radius: 6px;
+         transition: all 0.2s ease;
+         font-size: 0.85rem;
+     }
+     .auth-tab.active {
+         background: #ffffff;
+         color: var(--primary);
+         box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+     }
+
+     .alert {
+         padding: 10px;
+         border-radius: 6px;
+         font-size: 0.8rem;
+         margin-bottom: 1rem;
+         display: none;
+         text-align: center;
+         font-weight: 600;
+         word-break: break-word;
+     }
+     .alert-success { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+     .alert-error { background-color: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+
+     .btn-link {
+         background: none;
+         border: none;
+         color: var(--primary-light);
+         font-size: 0.8rem;
+         font-weight: 600;
+         cursor: pointer;
+         padding: 0;
+         margin-top: 0.8rem;
+         display: inline-block;
+         text-decoration: underline;
+     }
+
+     header { background: var(--primary); color: white; padding: 0.75rem 1rem; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+     .user-bar { display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; background: rgba(255,255,255,0.1); padding: 0.3rem 0.6rem; border-radius: 6px; margin-bottom: 0.4rem; }
+     .grado-selector-container select { background: white; color: var(--primary); font-weight: bold; padding: 0.3rem 0.6rem; border-radius: 6px; border: none; font-size: 0.9rem; cursor: pointer; }
+
+     nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); display: flex; border-top: 1px solid var(--border); z-index: 100; box-shadow: 0 -2px 8px rgba(0,0,0,0.05); }
+     nav button { flex: 1; padding: 0.6rem 0.1rem; border: none; background: none; font-size: 0.7rem; font-weight: 600; color: #64748b; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; }
+     nav button.active { color: var(--primary-light); font-weight: 700; }
+     nav button span.icon { font-size: 1.1rem; }
+
+     main { padding: 1rem; max-width: 900px; margin: 0 auto; }
+     .section { display: none; }
+     .section.active { display: block; }
+
+     .card { background: var(--surface); border-radius: 12px; border: 1px solid var(--border); padding: 1rem; margin-bottom: 1rem; box-shadow: 0 2px 4px rgba(0,0,0,0.03); }
+     .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
+     .card-header h2 { font-size: 1.1rem; color: var(--primary); }
+
+     .analytics-box { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; margin-bottom: 1rem; }
+     .promedio-global-card { display: flex; align-items: center; justify-content: space-between; background: var(--primary); color: white; padding: 0.8rem 1rem; border-radius: 8px; margin-bottom: 1rem; }
+     .promedio-val { font-size: 1.8rem; font-weight: 800; }
+     .bar-container { margin-bottom: 0.75rem; }
+     .bar-label { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.25rem; }
+     .bar-bg { background: #e2e8f0; border-radius: 6px; height: 12px; overflow: hidden; width: 100%; }
+     .bar-fill { height: 100%; background: var(--primary-light); transition: width 0.4s ease-in-out; border-radius: 6px; }
+
+     .asist-row { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid #f1f5f9; }
+     .asist-buttons { display: flex; gap: 0.25rem; }
+     .btn-st { border: 1px solid var(--border); background: #f8fafc; padding: 0.4rem 0.6rem; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
+     .btn-st.active-P { background: var(--success); color: white; border-color: var(--success); }
+     .btn-st.active-F { background: var(--danger); color: white; border-color: var(--danger); }
+     .btn-st.active-R { background: var(--warning); color: white; border-color: var(--warning); }
+     .btn-st.active-J { background: var(--info); color: white; border-color: var(--info); }
+
+     table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; font-size: 0.85rem; }
+     th, td { border: 1px solid var(--border); padding: 0.5rem; text-align: left; }
+     th { background: #f8fafc; color: var(--text); }
+
+     input, select, textarea { width: 100%; padding: 0.6rem; border: 1px solid var(--border); border-radius: 8px; font-size: 0.9rem; margin-top: 0.25rem; background: #fff; }
+     button.btn-action { width: 100%; padding: 0.75rem; background: var(--primary-light); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 0.75rem; font-size: 0.95rem; }
+     button.btn-sm { padding: 0.3rem 0.6rem; font-size: 0.8rem; width: auto; margin: 0; }
+
+     .timeline-item { border-left: 3px solid var(--primary-light); padding-left: 0.75rem; margin-bottom: 1rem; background: #f8fafc; padding: 0.75rem; border-radius: 0 8px 8px 0; }
+     .tag-campo { font-size: 0.75rem; background: #e0e7ff; color: #3730a3; padding: 0.2rem 0.4rem; border-radius: 4px; font-weight: bold; display: inline-block; margin-bottom: 0.25rem; }
+
+     .ficha-header-pdf { border-bottom: 2px solid var(--primary); padding-bottom: 0.5rem; margin-bottom: 1rem; text-align: center; }
+     .ficha-header-pdf h1 { font-size: 1.3rem; color: var(--primary); }
+     .ficha-header-pdf p { font-size: 0.85rem; color: #475569; }
+     .ficha-grid-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-bottom: 1rem; }
+     .ficha-stat-card { background: #f8fafc; border: 1px solid var(--border); padding: 0.5rem; border-radius: 6px; text-align: center; }
+     .ficha-stat-card label { font-size: 0.7rem; color: #64748b; display: block; }
+     .ficha-stat-card span { font-size: 1.1rem; font-weight: bold; color: var(--primary); }
+     .firmas-container { display: flex; justify-content: space-between; margin-top: 3rem; text-align: center; font-size: 0.8rem; }
+     .firma-box { border-top: 1px solid #000; width: 40%; padding-top: 0.3rem; }
+ </style>
+</head>
+<body>
+
+ <!-- AUTENTICACIÓN FIREBASE CON FONDO ANIMADO -->
+ <div id="auth-container">
+     <div class="bg-glow-1"></div>
+     <div class="bg-glow-2"></div>
+
+     <div class="auth-box">
+         <h2>Cuaderno Docente NEM</h2>
+         <p>Acceso seguro y sincronización en la nube</p>
+
+         <div class="auth-tabs">
+             <button class="auth-tab active" id="tab-login" onclick="cambiarTabAuth('login')">Ingresar</button>
+             <button class="auth-tab" id="tab-register" onclick="cambiarTabAuth('register')">Registrarse</button>
+         </div>
+
+         <div id="alert-box" class="alert"></div>
+
+         <form id="auth-form" autocomplete="off" onsubmit="procesarAuth(event)">
+             <label style="font-size:0.8rem; font-weight:600;">Correo Electrónico:</label>
+             <input type="email" id="auth-email" autocomplete="off" required placeholder="docente@escuela.edu.mx">
+
+             <div style="margin-top:0.6rem;">
+                 <label style="font-size:0.8rem; font-weight:600;">Contraseña:</label>
+                 <input type="password" id="auth-pass" autocomplete="new-password" placeholder="••••••••">
+             </div>
+
+             <div id="group-confirm-pass" style="margin-top:0.6rem; display: none;">
+                 <label style="font-size:0.8rem; font-weight:600;">Confirmar Contraseña:</label>
+                 <input type="password" id="auth-confirm-pass" autocomplete="new-password" placeholder="••••••••">
+             </div>
+
+             <button type="submit" id="btn-submit-auth" class="btn-action">Iniciar Sesión</button>
+
+             <div style="text-align: center;" id="container-forgot">
+                 <button type="button" class="btn-link" onclick="recuperarPassword()">¿Olvidaste tu contraseña?</button>
+             </div>
+         </form>
+     </div>
+ </div>
+
+ <!-- APP PRINCIPAL -->
+ <header>
+     <div class="user-bar">
+         <span>Docente: <strong id="lbl-usuario">-</strong></span>
+         <button class="btn-action btn-sm" style="background:var(--danger);" onclick="logout()">Cerrar Sesión</button>
+     </div>
+     <div class="grado-selector-container">
+         <span>Grado actual:</span>
+         <select id="select-grado" onchange="cambiarGrado()">
+             <option value="1">1.º de Primaria (Fase 3)</option>
+             <option value="2">2.º de Primaria (Fase 3)</option>
+             <option value="3">3.º de Primaria (Fase 4)</option>
+             <option value="4">4.º de Primaria (Fase 4)</option>
+             <option value="5" selected>5.º de Primaria (Fase 5)</option>
+             <option value="6">6.º de Primaria (Fase 5)</option>
+         </select>
+     </div>
+ </header>
+
+ <main>
+     <section id="tiemporeal" class="section active">
+         <div class="card">
+             <div class="card-header">
+                 <h2>Panel de Avance en Tiempo Real</h2>
+                 <span style="font-size:0.75rem; color:var(--success); font-weight:bold;">● Sincronizado</span>
+             </div>
+             
+             <div class="analytics-box">
+                 <div class="promedio-global-card">
+                     <div>
+                         <span style="font-size:0.8rem; opacity:0.9;">PROMEDIO GENERAL DEL GRUPO</span>
+                         <div style="font-size:0.75rem; opacity:0.8;" id="rt-total-evals">0 evaluaciones registradas</div>
+                     </div>
+                     <div class="promedio-val" id="rt-promedio-global">--</div>
+                 </div>
+
+                 <h4 style="font-size:0.85rem; color:var(--text); margin-bottom:0.5rem;">Desempeño Promedio por Campo Formativo:</h4>
+                 <div id="rt-campos-bars"></div>
+             </div>
+
+             <h3 style="font-size:0.95rem; color:var(--primary); margin-top:1rem;">Últimas Evaluaciones Guardadas</h3>
+             <div id="rt-evaluaciones" style="margin-top:0.5rem;"></div>
+
+             <h3 style="font-size:0.95rem; color:var(--primary); margin-top:1rem;">Bitácora del Diario Docente</h3>
+             <div id="rt-diario" style="margin-top:0.5rem;"></div>
+         </div>
+     </section>
+
+     <section id="alumnos" class="section">
+         <div class="card">
+             <div class="card-header">
+                 <h2>Lista del Grupo (<span id="num-alumnos">0</span>)</h2>
+             </div>
+             <div style="overflow-x:auto;">
+                 <table>
+                     <thead>
+                         <tr>
+                             <th>#</th>
+                             <th>Nombre Completo</th>
+                             <th>Observaciones</th>
+                             <th class="no-print">Acciones</th>
+                         </tr>
+                     </thead>
+                     <tbody id="tabla-alumnos"></tbody>
+                 </table>
+             </div>
+             <button class="btn-action" style="background:var(--secondary);" onclick="agregarAlumno()">+ Agregar Alumno</button>
+         </div>
+     </section>
+
+     <section id="ficha" class="section">
+         <div class="card no-print">
+             <div class="card-header">
+                 <h2>Generar Ficha Individual de Rendimiento</h2>
+             </div>
+             <label>Selecciona un Alumno/a:</label>
+             <select id="select-alumno-ficha" onchange="renderFichaAlumno()">
+             </select>
+             <button class="btn-action" style="background:var(--primary-light); margin-top:0.75rem;" onclick="window.print()">🖨️ Imprimir / Guardar como PDF</button>
+         </div>
+
+         <div class="card" id="ficha-print-area" style="margin-top:1rem;">
+             <div class="ficha-header-pdf">
+                 <h1>INFORME DE RENDIMIENTO Y EVALUACIÓN FORMATIVA (NEM)</h1>
+                 <p><strong>Docente:</strong> <span id="f-docente">-</span> | <strong>Grado:</strong> <span id="f-grado">-</span> | <strong>Fecha:</strong> <span id="f-fecha">-</span></p>
+                 <p style="font-size:1.1rem; font-weight:bold; margin-top:0.4rem; color:var(--text);" id="f-alumno-nombre">Nombre del Alumno</p>
+             </div>
+
+             <div class="ficha-grid-stats">
+                 <div class="ficha-stat-card">
+                     <label>Promedio General</label>
+                     <span id="f-promedio">--</span>
+                 </div>
+                 <div class="ficha-stat-card">
+                     <label>Asistencias Total</label>
+                     <span id="f-asist-p">0</span>
+                 </div>
+                 <div class="ficha-stat-card">
+                     <label>Faltas Registradas</label>
+                     <span id="f-asist-f">0</span>
+                 </div>
+             </div>
+
+             <h3 style="font-size:0.95rem; color:var(--primary); margin-top:1rem; border-bottom:1px solid var(--border); padding-bottom:0.2rem;">1. Desempeño por Campos Formativos</h3>
+             <div style="overflow-x:auto;">
+                 <table>
+                     <thead>
+                         <tr>
+                             <th>Fecha</th>
+                             <th>Campo Formativo</th>
+                             <th>Contenido / PDA / Actividad</th>
+                             <th>Valoración</th>
+                             <th>Observación Pedagógica</th>
+                         </tr>
+                     </thead>
+                     <tbody id="f-tabla-evals"></tbody>
+                 </table>
+             </div>
+
+             <h3 style="font-size:0.95rem; color:var(--primary); margin-top:1.5rem; border-bottom:1px solid var(--border); padding-bottom:0.2rem;">2. Observaciones Generales del Alumno</h3>
+             <p id="f-obs-alumno" style="font-size:0.85rem; padding:0.5rem; background:#f8fafc; border-radius:6px; margin-top:0.5rem;">Sin observaciones registradas.</p>
+
+             <div class="firmas-container">
+                 <div class="firma-box">Firma del Docente</div>
+                 <div class="firma-box">Firma del Padre, Madre o Tutor</div>
+             </div>
+         </div>
+     </section>
+
+     <section id="asistencia" class="section">
+         <div class="card">
+             <div class="card-header">
+                 <h2>Asistencia Diaria</h2>
+                 <input type="date" id="asist-fecha" style="width:auto; padding:0.3rem;" onchange="renderAsistencia()">
+             </div>
+             <div id="lista-asistencia"></div>
+             <button class="btn-action" onclick="guardarAsistencia()">Guardar Asistencia</button>
+         </div>
+     </section>
+
+     <section id="evaluacion" class="section">
+         <div class="card">
+             <div class="card-header"><h2>Nueva Evaluación Formativa</h2></div>
+             
+             <label>Campo Formativo:</label>
+             <select id="eval-campo" onchange="actualizarContenidos()">
+                 <option value="Lenguajes">Lenguajes</option>
+                 <option value="Saberes y Pensamiento Científico">Saberes y Pensamiento Científico</option>
+                 <option value="Ética, Naturaleza y Sociedades">Ética, Naturaleza y Sociedades</option>
+                 <option value="De lo Humano y lo Comunitario">De lo Humano y lo Comunitario</option>
+             </select>
+
+             <label style="margin-top:0.5rem; display:block;">Contenido NEM:</label>
+             <select id="eval-contenido" onchange="actualizarPDA()"></select>
+
+             <label style="margin-top:0.5rem; display:block;">Proceso de Desarrollo de Aprendizaje (PDA):</label>
+             <select id="eval-pda"></select>
+
+             <label style="margin-top:0.5rem; display:block;">Actividad / Detalle adicional (Opcional):</label>
+             <input type="text" id="eval-actividad" placeholder="Ej. Exposición sobre proyectos comunitarios">
+
+             <div style="overflow-x:auto; margin-top:1rem;">
+                 <table>
+                     <thead>
+                         <tr>
+                             <th>Alumno</th>
+                             <th>Valoración (Número 1-10)</th>
+                             <th>Observación</th>
+                         </tr>
+                     </thead>
+                     <tbody id="tabla-eval"></tbody>
+                 </table>
+             </div>
+             <button class="btn-action" onclick="guardarEvaluacion()">Registrar y Sincronizar</button>
+         </div>
+     </section>
+
+     <section id="diario" class="section">
+         <div class="card">
+             <div class="card-header"><h2>Nuevo Registro de Diario</h2></div>
+             <label>Fecha:</label>
+             <input type="date" id="diario-fecha">
+             <label style="margin-top:0.5rem; display:block;">PDA / Tema:</label>
+             <input type="text" id="diario-tema" placeholder="Contenido abordado">
+             <label style="margin-top:0.5rem; display:block;">Notas de la Jornada:</label>
+             <textarea id="diario-texto" rows="3" placeholder="Ajustes razonables, evidencias u observaciones..."></textarea>
+             <button class="btn-action" onclick="guardarDiario()">Guardar en Tiempo Real</button>
+         </div>
+     </section>
+
+     <section id="datos" class="section">
+         <div class="card">
+             <div class="card-header"><h2>Respaldos del Perfil</h2></div>
+             <button class="btn-action" style="background:var(--success);" onclick="exportarCSV()">📊 Exportar a Excel (CSV)</button>
+             <button class="btn-action" style="background:var(--secondary);" onclick="exportarJSON()">💾 Guardar Copia Completa (JSON)</button>
+         </div>
+     </section>
+ </main>
+
+ <nav>
+     <button class="active" onclick="switchTab('tiemporeal', this)"><span class="icon">⚡</span>Tiempo Real</button>
+     <button onclick="switchTab('alumnos', this)"><span class="icon">👨‍🎓</span>Alumnos</button>
+     <button onclick="switchTab('ficha', this)"><span class="icon">📄</span>Ficha</button>
+     <button onclick="switchTab('asistencia', this)"><span class="icon">✅</span>Asistencia</button>
+     <button onclick="switchTab('evaluacion', this)"><span class="icon">📊</span>Evaluación</button>
+     <button onclick="switchTab('diario', this)"><span class="icon">📖</span>Diario</button>
+     <button onclick="switchTab('datos', this)"><span class="icon">⚙️</span>Ajustes</button>
+ </nav>
+
+ <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+ <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+ <script>
+     const firebaseConfig = {
+         apiKey: "AIzaSyCHx_5EijKIqgKsxHKnXwsm0rbQ9B_-uBk",
+         authDomain: "cuaderno-docente-2aa18.firebaseapp.com",
+         databaseURL: "https://cuaderno-docente-2aa18-default-rtdb.firebaseio.com",
+         projectId: "cuaderno-docente-2aa18",
+         storageBucket: "cuaderno-docente-2aa18.firebasestorage.app",
+         messagingSenderId: "1046211501793",
+         appId: "1:1046211501793:web:e0a1776d13ebd92ae4e1a0",
+         measurementId: "G-G63Y7YD9TJ"
+     };
+
+     firebase.initializeApp(firebaseConfig);
+     const auth = firebase.auth();
+
+     let usuarioActual = null;
+     let gradoActual = "5";
+     let modoAuthActual = 'login';
+     let appData = { alumnos: [], asistencia: {}, evaluaciones: [], diario: [] };
+
+     const camposLista = [
+         "Lenguajes",
+         "Saberes y Pensamiento Científico",
+         "Ética, Naturaleza y Sociedades",
+         "De lo Humano y lo Comunitario"
+     ];
+
+     // CATÁLOGO COMPLETO FASE 5 (5.º GRADO DE PRIMARIA) - PROGRAMA SINTÉTICO NEM
+     const catalogoNEM = {
+         "Lenguajes": {
+             "Narración de sucesos autobiográficos": [
+                 "Lee textos autobiográficos e identifica las relaciones temporales de secuencia, simultaneidad y duración.",
+                 "Analiza distintos sucesos de su vida para elegir los más significativos y organizarlos de manera coherente en una narración.",
+                 "Determina los rasgos descriptivos de los personajes y el orden cronológico de los hechos.",
+                 "Escribe la narración de los hechos autobiográficos haciendo uso de comas, puntos y seguido, puntos y aparte y dos puntos."
+             ],
+             "Comprensión y producción de textos explicativos": [
+                 "Localiza y lee textos explicativos sobre temas variados.",
+                 "Expresa con sus palabras las ideas que comprende de los textos leídos y las relaciona con sus conocimientos previos.",
+                 "Reconoce y emplea relaciones de causa-consecuencia en la redacción de textos explicativos.",
+                 "Utiliza palabras de enlace como en consecuencia, por lo tanto, debido a, a causa de, porque."
+             ],
+             "Participación en debates sobre temas de la comunidad": [
+                 "Reconoce la función de los debates y sus características (introducción, desarrollo, conclusiones).",
+                 "Investiga y toma notas sobre un tema de interés común para preparar su participación en un debate.",
+                 "Formula argumentos claros y fundamentados haciendo uso de un lenguaje formal y respetuoso.",
+                 "Escucha con atención las intervenciones de sus compañeros y contrasta sus posturas."
+             ],
+             "Comprensión y producción de textos argumentativos": [
+                 "Lee textos argumentativos e identifica la tesis, los argumentos y las conclusiones.",
+                 "Escribe textos argumentativos en los que expresa su postura sobre un tema de su interés.",
+                 "Utiliza nexos que expresan causa o consecuencia al construir sus argumentos."
+             ],
+             "Comprensión y producción de textos informativos": [
+                 "Selecciona y lee textos informativos sobre temas de su interés.",
+                 "Escribe textos informativos empleando signos de puntuación: coma, dos puntos, punto y seguido, y punto y aparte.",
+                 "Reconoce la función de las fuentes de consulta e incluye referencias bibliográficas o digitales simples."
+             ],
+             "Comprensión y producción de textos discontinuos": [
+                 "Sintetiza información de diferentes fuentes para organizarla en tablas, gráficas, cuadros sinópticos o mapas conceptuales.",
+                 "Produce textos discontinuos considerando la distribución del espacio y la claridad visual de la información."
+             ],
+             "Elaboración de un tríptico informativo sobre la prevención de problemas": [
+                 "Indaga sobre situaciones o problemas de salud o seguridad en la comunidad para elaborar un tríptico.",
+                 "Organiza la información de manera clara, estructurada con títulos, subtítulos, imágenes y esquemas.",
+                 "Difunde el tríptico entre los integrantes de la comunidad escolar y familiar."
+             ],
+             "Reconocimiento de la diversidad lingüística de México": [
+                 "Investiga en fuentes impresas o electrónicas sobre las lenguas originarias que se hablan en México.",
+                 "Identifica la influencia de las lenguas indígenas en el español que se habla actualmente en el país."
+             ],
+             "Interpretación y producción de anuncios publicitarios": [
+                 "Identifica los productos o servicios ofrecidos en su comunidad que se desean publicitar.",
+                 "Elabora anuncios publicitarios empleando recursos lingüísticos y visuales para persuadir al público objetivo."
+             ],
+             "Seguimiento crítico de noticias en diferentes medios de comunicación": [
+                 "Analiza noticias transmitidas por prensa escrita, radio, televisión e internet.",
+                 "Compara la manera en que diferentes medios de comunicación informan sobre un mismo hecho."
+             ],
+             "Lectura y análisis de mitos y leyendas": [
+                 "Lee mitos y leyendas de México y del mundo e identifica sus características y funciones sociales.",
+                 "Distingue elementos de realidad y fantasía presentes en los relatos de la tradición oral."
+             ],
+             "Análisis y representación de guiones teatrales": [
+                 "Lee guiones teatrales e identifica los diálogos, las acotaciones y la estructura de los actos y escenas.",
+                 "Realiza lecturas dramatizadas y participa en la puesta en escena de textos teatrales breves."
+             ],
+             "Combinación de elementos visuales, sonoros y corporales en manifestaciones artísticas": [
+                 "Explora combinaciones de sonidos, formas, colores y movimientos para crear secuencias artísticas.",
+                 "Relaciona sus producciones artísticas con historias, emociones o problemáticas de su comunidad."
+             ]
+         },
+         "Saberes y Pensamiento Científico": {
+             "Estructura y funcionamiento del cuerpo humano: sistemas circulatorio, respiratorio e inmunológico": [
+                 "Describe y representa con modelos la relación de la nariz, tráquea y pulmones en el intercambio de gases.",
+                 "Indaga, describe y representa con modelos la función general del corazón y los vasos sanguíneos.",
+                 "Explica la participación del sistema inmunológico en la defensa y protección del cuerpo humano.",
+                 "Describe los beneficios de practicar hábitos de higiene y estilo de vida saludable para cuidar los sistemas del cuerpo."
+             ],
+             "Etapas del desarrollo humano: proceso de reproducción y prevención de ITS y embarazos": [
+                 "Describe la infancia, adolescencia, madurez y vejez como parte del desarrollo humano.",
+                 "Comprende que el embarazo es resultado de una relación sexual e indaga sobre los métodos anticonceptivos y de prevención de ITS."
+             ],
+             "Alimentación saludable: características de la dieta correcta y decisiones para la salud": [
+                 "Explicita las características de una dieta correcta (variada, equilibrada, inocua, suficiente y adecuada).",
+                 "Analiza etiquetas de alimentos procesados para identificar el contenido de azúcares, grasas y sodio.",
+                 "Propone acciones para mejorar la alimentación en la escuela y el hogar mediante el Plato del Bien Comer."
+             ],
+             "Funciones vitales en plantas y animales y su relación con el entorno natural": [
+                 "Explicita el proceso de reproducción en plantas con flores: polinización, dispersión de semillas y germinación.",
+                 "Indaga el tipo de desarrollo y nacimiento de diversos animales clasificándolos en ovíparos y vivíparos."
+             ],
+             "Factores que conforman la biodiversidad y el medio ambiente": [
+                 "Comprende la biodiversidad como la variedad de seres vivos y ecosistemas presentes en su región y país.",
+                 "Analiza la importancia de los servicios ambientales que brindan los ecosistemas para la preservación de la vida."
+             ],
+             "Propiedades de los materiales: masa, volumen y estados de agregación": [
+                 "Experimenta con la masa y el volumen de diversos materiales utilizando balanzas y recipientes graduados.",
+                 "Comprende los cambios de estado físico de la materia al variarle la temperatura."
+             ],
+             "Estudio de los números": [
+                 "Expresa oralmente la sucesión numérica hasta seis cifras en español y en su lengua materna.",
+                 "Lee, escribe y ordena números naturales de hasta seis cifras y decimales hasta milésimos.",
+                 "Compara y relaciona fracciones equivalentes y realiza conversiones sencillas a números decimales."
+             ],
+             "Suma y resta, su relación como operaciones inversas": [
+                 "Resuelve situaciones problemáticas vinculadas a su contexto que implican sumas o restas con números decimales y fracciones.",
+                 "Aplica los algoritmos convencionales de suma y resta con números naturales y decimales."
+             ],
+             "Multiplicación y división, su relación como operaciones inversas": [
+                 "Resuelve problemas multiplicativos con números naturales mediante procedimientos diversos.",
+                 "Resuelve situaciones problemáticas de división con números naturales y cociente decimal."
+             ],
+             "Cuerpos geométricos y sus características": [
+                 "Reconoce y describe semejanzas y diferencias entre un prisma y una pirámide.",
+                 "Propone desarrollos planos para construir prismas rectos cuadrangulares o rectangulares."
+             ],
+             "Figuras geométricas y sus características": [
+                 "Con el apoyo de instrumentos geométricos, construye círculos a partir de distintos datos (radio o diámetro).",
+                 "Distingue la diferencia entre circunferencia y círculo e identifica sus elementos principales."
+             ],
+             "Ubicación espacial": [
+                 "Elabora, interpreta y analiza planos para comunicar la ubicación de seres u objetos en el entorno."
+             ],
+             "Medición de longitud, masa y capacidad": [
+                 "Resuelve problemas que implican la estimación y medición de longitudes, masas y capacidades con unidades convencionales."
+             ],
+             "Organización e interpretación de datos": [
+                 "Construye tablas de frecuencias y gráficas de barras para interpretar información sobre su comunidad.",
+                 "Resuelve preguntas asociadas a un conjunto de datos a partir del análisis de la moda y la media aritmética."
+             ]
+         },
+         "Ética, Naturaleza y Sociedades": {
+             "Valoración de la biodiversidad y sustentabilidad": [
+                 "Comprende la biodiversidad, su función como elemento vital en la Tierra y en la comunidad.",
+                 "Analiza críticamente formas de cuidar la naturaleza y propone acciones de consumo sustentable."
+             ],
+             "Derechos humanos: a un ambiente sano y acceso al agua potable": [
+                 "Indaga sobre el derecho de todas las personas a un medio ambiente sano y adecuado para su desarrollo.",
+                 "Dialoga sobre la importancia del acceso universal al agua potable como un derecho humano fundamental."
+             ],
+             "La responsabilidad compartida en el cuidado del medio ambiente": [
+                 "Comprende el impacto de las actividades humanas en la degradación del medio ambiente y propone soluciones.",
+                 "Promueve el consumo responsable, la reducción de plásticos y el reciclaje en su entorno escolar."
+             ],
+             "Riesgos de desastre y crisis humanitarias": [
+                 "Identifica los riesgos de desastre de origen natural o antrópico en su comunidad o entidad.",
+                 "Participa en la elaboración de mapas de riesgos y planes de protección civil en la escuela."
+             ],
+             "Construcción de la cultura de paz y resolución de conflictos": [
+                 "Analiza situaciones de conflicto en la escuela o comunidad para identificar sus causas y consecuencias.",
+                 "Participa en la resolución pacífica de conflictos aplicando la negociación, el diálogo y la empatía."
+             ],
+             "La democracia como forma de gobierno y de vida": [
+                 "Comprende que la democracia implica el respeto a los derechos humanos y la participación en decisiones colectivas.",
+                 "Participa en ejercicios de toma de decisiones en el aula mediante el voto y el consenso."
+             ],
+             "Desafíos para el ejercicio de los derechos humanos y la dignidad": [
+                 "Analiza situaciones de maltrato, abuso, violencia o discriminación en la comunidad y propone medidas para su erradicación.",
+                 "Promueve acciones para garantizar la igualdad de género y los derechos de las niñas, niños y adolescentes."
+             ],
+             "Cultura democrática: principios y valores de las instituciones": [
+                 "Comprende las funciones de las instituciones públicas encargadas de garantizar los derechos y la justicia en México."
+             ],
+             "México como nación pluricultural": [
+                 "Reconoce y valora los aportes de las comunidades indígenas, afromexicanas y migrantes en la historia y cultura nacional."
+             ]
+         },
+         "De lo Humano y lo Comunitario": {
+             "La familia como espacio de desarrollo, protección e inclusión": [
+                 "Participa en distintas formas de convivencia en la familia para valorar la diversidad.",
+                 "Reflexiona sobre los valores compartidos, la corresponsabilidad y el sentido de pertenencia."
+             ],
+             "Alternativas ante situaciones de riesgo en la comunidad": [
+                 "Indaga sobre situaciones de riesgo social (adicciones, violencia) e identifica medidas preventivas en su entorno.",
+                 "Diseña y difunde campañas de prevención dirigidas a sus compañeros e integrantes de la comunidad."
+             ],
+             "La escuela como espacio de convivencia, colaboración y aprendizaje": [
+                 "Participa en la organización de actividades comunitarias y escolares orientadas al bienestar común.",
+                 "Propone mejoras en las normas de convivencia del aula para favorecer la inclusión y el respeto mutuo."
+             ],
+             "Formas de ser, pensar, actuar y relacionarse": [
+                 "Reflexiona acerca de sus formas de ser, pensar, actuar y relacionarse para el logro de metas colectivas.",
+                 "Valora las diferencias individuales y rechaza actitudes discriminatorias hacia sus pares."
+             ],
+             "Construcción del proyecto de vida": [
+                 "Replantea sus metas personales y académicas a corto y mediano plazo reconociendo sus fortalezas y áreas de oportunidad.",
+                 "Valora el esfuerzo constante y la perseverancia en la consecución de sus proyectos individuales y grupales."
+             ],
+             "Ecuaciones personales y equidad de género": [
+                 "Analiza estereotipos de género presentes en su comunidad y propone acciones para promover la equidad."
+             ],
+             "Capacidades, habilidades y destrezas motrices": [
+                 "Aplica sus capacidades motrices (coordinación, equilibrio, agilidad) al participar en juegos individuales y colectivos.",
+                 "Adapta sus respuestas motrices en situaciones de juego para mejorar la eficiencia corporal."
+             ],
+             "Pensamiento lúdico, divergente y estratégico": [
+                 "Diseña estrategias al interactuar en juegos para adaptarse a los cambios de la dinámica lúdica.",
+                 "Evalúa el trabajo en equipo y la efectividad de las decisiones tomadas durante el desarrollo del juego."
+             ],
+             "Estilos de vida activos y saludables": [
+                 "Plantea alternativas de actividades físicas que puede practicar dentro y fuera de la escuela.",
+                 "Organiza juegos tradicionales y dinámicas colaborativas para mejorar la salud física y mental."
+             ],
+             "Acciones individuales que repercuten en la conservación de la salud": [
+                 "Analiza la relación entre los hábitos de higiene, alimentación y descanso con el mantenimiento integral de la salud."
+             ]
+         }
+     };
+
+     auth.onAuthStateChanged((user) => {
+         if (user) {
+             usuarioActual = user.email;
+             document.getElementById('lbl-usuario').innerText = user.email;
+             document.getElementById('auth-container').style.display = 'none';
+             cargarDatos();
+         } else {
+             usuarioActual = null;
+             document.getElementById('auth-container').style.display = 'flex';
+         }
+     });
+
+     function limpiarFormularioAuth() {
+         document.getElementById('auth-email').value = '';
+         document.getElementById('auth-pass').value = '';
+         document.getElementById('auth-confirm-pass').value = '';
+     }
+
+     function cambiarTabAuth(modo) {
+         modoAuthActual = modo;
+         ocultarAlerta();
+         limpiarFormularioAuth();
+
+         document.getElementById('tab-login').classList.toggle('active', modo === 'login');
+         document.getElementById('tab-register').classList.toggle('active', modo === 'register');
+         
+         const confirmGroup = document.getElementById('group-confirm-pass');
+         const confirmInput = document.getElementById('auth-confirm-pass');
+         const forgotBtn = document.getElementById('container-forgot');
+         const passInput = document.getElementById('auth-pass');
+
+         if (modo === 'register') {
+             confirmGroup.style.display = 'block';
+             confirmInput.setAttribute('required', 'required');
+             passInput.setAttribute('required', 'required');
+             forgotBtn.style.display = 'none';
+             document.getElementById('btn-submit-auth').innerText = 'Crear Cuenta Nube';
+         } else {
+             confirmGroup.style.display = 'none';
+             confirmInput.removeAttribute('required');
+             passInput.setAttribute('required', 'required');
+             forgotBtn.style.display = 'block';
+             document.getElementById('btn-submit-auth').innerText = 'Iniciar Sesión';
+         }
+     }
+
+     function mostrarAlerta(mensaje, tipo) {
+         const alertBox = document.getElementById('alert-box');
+         alertBox.innerText = mensaje;
+         alertBox.className = 'alert ' + (tipo === 'exito' ? 'alert-success' : 'alert-error');
+         alertBox.style.display = 'block';
+     }
+
+     function ocultarAlerta() {
+         document.getElementById('alert-box').style.display = 'none';
+     }
+
+     async function procesarAuth(event) {
+         event.preventDefault();
+         ocultarAlerta();
+
+         const email = document.getElementById('auth-email').value.trim();
+         const pass = document.getElementById('auth-pass').value;
+
+         if (modoAuthActual === 'register') {
+             const confirmPass = document.getElementById('auth-confirm-pass').value;
+             if (pass !== confirmPass) {
+                 mostrarAlerta("Las contraseñas no coinciden. Por favor verifícalas.", "error");
+                 return;
+             }
+             try {
+                 await auth.createUserWithEmailAndPassword(email, pass);
+                 mostrarAlerta("¡Cuenta creada exitosamente! Reiniciando vista...", "exito");
+                 setTimeout(() => {
+                     auth.signOut().then(() => {
+                         cambiarTabAuth('login');
+                     });
+                 }, 1500);
+             } catch (error) {
+                 mostrarAlerta(`Error [${error.code || 'Desconocido'}]: ${traducirError(error)}`, "error");
+             }
+         } else {
+             try {
+                 await auth.signInWithEmailAndPassword(email, pass);
+             } catch (error) {
+                 mostrarAlerta(`Error [${error.code || 'Desconocido'}]: ${traducirError(error)}`, "error");
+             }
+         }
+     }
+
+     async function recuperarPassword() {
+         ocultarAlerta();
+         const email = document.getElementById('auth-email').value.trim();
+         if (!email) {
+             mostrarAlerta("Escribe tu correo en el campo de arriba para enviarte el enlace.", "error");
+             return;
+         }
+         try {
+             await auth.sendPasswordResetEmail(email);
+             mostrarAlerta("Enlace enviado. Revisa tu bandeja de entrada o correo no deseado.", "exito");
+         } catch (error) {
+             mostrarAlerta(`Error [${error.code || 'Desconocido'}]: ${traducirError(error)}`, "error");
+         }
+     }
+
+     function traducirError(error) {
+         switch (error.code) {
+             case 'auth/email-already-in-use':
+                 return 'Este correo ya está registrado. Intenta iniciar sesión.';
+             case 'auth/weak-password':
+                 return 'La contraseña debe tener al menos 6 caracteres.';
+             case 'auth/invalid-email':
+                 return 'El formato del correo electrónico no es válido.';
+             case 'auth/user-not-found':
+                 return 'No existe una cuenta registrada con este correo.';
+             case 'auth/wrong-password':
+             case 'auth/invalid-credential':
+                 return 'Correo o contraseña incorrectos.';
+             case 'auth/operation-not-allowed':
+                 return 'Falta activar el proveedor de Correo/Contraseña en Firebase Console.';
+             case 'auth/unauthorized-domain':
+                 return 'Abre el archivo mediante un servidor HTTP local o aloja la página en Firebase Hosting.';
+             case 'auth/network-request-failed':
+                 return 'Error de red. Asegúrate de estar en un servidor web seguro (HTTP/HTTPS) y no desde una vista de archivos en Android.';
+             default:
+                 return error.message || 'Ocurrió un error inesperado.';
+         }
+     }
+
+     function logout() {
+         auth.signOut().then(() => {
+             limpiarFormularioAuth();
+             location.reload();
+         });
+     }
+
+     function switchTab(tabId, btn) {
+         document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+         document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+         document.getElementById(tabId).classList.add('active');
+         if(btn) btn.classList.add('active');
+
+         if (tabId === 'tiemporeal') renderTiempoReal();
+         if (tabId === 'alumnos') renderAlumnos();
+         if (tabId === 'ficha') setupFicha();
+         if (tabId === 'asistencia') renderAsistencia();
+         if (tabId === 'evaluacion') {
+             renderFormEvaluacion();
+             actualizarContenidos();
+         }
+         if (tabId === 'diario') setupDiario();
+     }
+
+     function cambiarGrado() {
+         gradoActual = document.getElementById('select-grado').value;
+         cargarDatos();
+     }
+
+     function getStorageKey() {
+         return `nem_data_${usuarioActual}_g${gradoActual}`;
+     }
+
+     function cargarDatos() {
+         if (!usuarioActual) return;
+         const dataRaw = localStorage.getItem(getStorageKey());
+         if (dataRaw) {
+             appData = JSON.parse(dataRaw);
+         } else {
+             appData = { alumnos: [], asistencia: {}, evaluaciones: [], diario: [] };
+         }
+         renderTiempoReal();
+     }
+
+     function guardarDatos() {
+         if (!usuarioActual) return;
+         localStorage.setItem(getStorageKey(), JSON.stringify(appData));
+         renderTiempoReal();
+     }
+
+     function renderTiempoReal() {
+         const evals = appData.evaluaciones || [];
+         let suma = 0, count = 0;
+         let sumaCampos = { "Lenguajes": 0, "Saberes y Pensamiento Científico": 0, "Ética, Naturaleza y Sociedades": 0, "De lo Humano y lo Comunitario": 0 };
+         let countCampos = { "Lenguajes": 0, "Saberes y Pensamiento Científico": 0, "Ética, Naturaleza y Sociedades": 0, "De lo Humano y lo Comunitario": 0 };
+
+         evals.forEach(e => {
+             e.notas.forEach(n => {
+                 const val = parseFloat(n.val);
+                 if (!isNaN(val)) {
+                     suma += val;
+                     count++;
+                     if (sumaCampos[e.campo] !== undefined) {
+                         sumaCampos[e.campo] += val;
+                         countCampos[e.campo]++;
+                     }
+                 }
+             });
+         });
+
+         const promGlobal = count > 0 ? (suma / count).toFixed(1) : "--";
+         document.getElementById('rt-promedio-global').innerText = promGlobal;
+         document.getElementById('rt-total-evals').innerText = `${evals.length} sesiones de evaluación registradas`;
+
+         let htmlBars = "";
+         camposLista.forEach(c => {
+             const cProm = countCampos[c] > 0 ? (sumaCampos[c] / countCampos[c]).toFixed(1) : 0;
+             const pct = countCampos[c] > 0 ? (cProm * 10) : 0;
+             htmlBars += `
+                 <div class="bar-container">
+                     <div class="bar-label">
+                         <span>${c}</span>
+                         <span>${countCampos[c] > 0 ? cProm : '--'}</span>
+                     </div>
+                     <div class="bar-bg">
+                         <div class="bar-fill" style="width: ${pct}%;"></div>
+                     </div>
+                 </div>
+             `;
+         });
+         document.getElementById('rt-campos-bars').innerHTML = htmlBars;
+
+         let htmlEvals = "";
+         evals.slice(-3).reverse().forEach(e => {
+             htmlEvals += `
+                 <div class="timeline-item">
+                     <span class="tag-campo">${e.campo}</span>
+                     <strong style="display:block; font-size:0.85rem;">${e.actividad}</strong>
+                     <small style="color:#64748b;">${e.fecha}</small>
+                 </div>
+             `;
+         });
+         document.getElementById('rt-evaluaciones').innerHTML = htmlEvals || "<p style='font-size:0.8rem; color:#64748b;'>No hay evaluaciones aún.</p>";
+
+         let htmlDiario = "";
+         (appData.diario || []).slice(-2).reverse().forEach(d => {
+             htmlDiario += `
+                 <div class="timeline-item" style="border-left-color: var(--secondary);">
+                     <strong style="display:block; font-size:0.85rem;">${d.tema}</strong>
+                     <p style="font-size:0.8rem; margin:0.2rem 0;">${d.texto}</p>
+                     <small style="color:#64748b;">${d.fecha}</small>
+                 </div>
+             `;
+         });
+         document.getElementById('rt-diario').innerHTML = htmlDiario || "<p style='font-size:0.8rem; color:#64748b;'>Bitácora vacía.</p>";
+     }
+
+     function renderAlumnos() {
+         document.getElementById('num-alumnos').innerText = appData.alumnos.length;
+         const tbody = document.getElementById('tabla-alumnos');
+         tbody.innerHTML = "";
+
+         appData.alumnos.forEach((a, index) => {
+             tbody.innerHTML += `
+                 <tr>
+                     <td>${index + 1}</td>
+                     <td><input type="text" value="${a.nombre}" onchange="actualizarAlumno(${index}, 'nombre', this.value)" style="margin:0;"></td>
+                     <td><input type="text" value="${a.obs || ''}" placeholder="Observaciones..." onchange="actualizarAlumno(${index}, 'obs', this.value)" style="margin:0;"></td>
+                     <td class="no-print"><button class="btn-action btn-sm" style="background:var(--danger);" onclick="eliminarAlumno(${index})">✕</button></td>
+                 </tr>
+             `;
+         });
+     }
+
+     function agregarAlumno() {
+         const nombre = prompt("Nombre completo del alumno:");
+         if (nombre && nombre.trim() !== "") {
+             appData.alumnos.push({ nombre: nombre.trim(), obs: "" });
+             guardarDatos();
+             renderAlumnos();
+         }
+     }
+
+     function actualizarAlumno(index, field, val) {
+         appData.alumnos[index][field] = val;
+         guardarDatos();
+     }
+
+     function eliminarAlumno(index) {
+         if (confirm(`¿Eliminar a ${appData.alumnos[index].nombre} y toda su información registrada?`)) {
+             appData.alumnos.splice(index, 1);
+
+             if (appData.evaluaciones && Array.isArray(appData.evaluaciones)) {
+                 appData.evaluaciones.forEach(ev => {
+                     if (ev.notas && Array.isArray(ev.notas)) {
+                         ev.notas = ev.notas.filter(n => parseInt(n.alumnoIdx) !== index);
+                         ev.notas.forEach(n => {
+                             let idxNum = parseInt(n.alumnoIdx);
+                             if (idxNum > index) {
+                                 n.alumnoIdx = (idxNum - 1).toString();
+                             }
+                         });
+                     }
+                 });
+             }
+
+             if (appData.asistencia) {
+                 Object.keys(appData.asistencia).forEach(fecha => {
+                     const diaAsistencia = appData.asistencia[fecha];
+                     const nuevoDia = {};
+
+                     Object.keys(diaAsistencia).forEach(keyIdx => {
+                         const idxNum = parseInt(keyIdx);
+                         if (idxNum < index) {
+                             nuevoDia[idxNum] = diaAsistencia[keyIdx];
+                         } else if (idxNum > index) {
+                             nuevoDia[idxNum - 1] = diaAsistencia[keyIdx];
+                         }
+                     });
+
+                     appData.asistencia[fecha] = nuevoDia;
+                 });
+             }
+
+             guardarDatos();
+             renderAlumnos();
+         }
+     }
+
+     function setupFicha() {
+         const select = document.getElementById('select-alumno-ficha');
+         select.innerHTML = "";
+         appData.alumnos.forEach((a, i) => {
+             select.innerHTML += `<option value="${i}">${a.nombre}</option>`;
+         });
+         if (appData.alumnos.length > 0) renderFichaAlumno();
+     }
+
+     function renderFichaAlumno() {
+         const index = document.getElementById('select-alumno-ficha').value;
+         if (index === "" || !appData.alumnos[index]) return;
+
+         const al = appData.alumnos[index];
+         document.getElementById('f-docente').innerText = usuarioActual || "-";
+         document.getElementById('f-grado').innerText = `${gradoActual}.º Grado`;
+         document.getElementById('f-fecha').innerText = new Date().toLocaleDateString();
+         document.getElementById('f-alumno-nombre').innerText = al.nombre;
+         document.getElementById('f-obs-alumno').innerText = al.obs || "Sin observaciones registradas.";
+
+         let countP = 0, countF = 0;
+         Object.values(appData.asistencia || {}).forEach(day => {
+             const status = day[index] || day[parseInt(index)];
+             if (status === 'P') countP++;
+             if (status === 'F') countF++;
+         });
+         
+         document.getElementById('f-asist-p').innerText = countP;
+         document.getElementById('f-asist-f').innerText = countF;
+
+         let evalsHtml = "";
+         let suma = 0, count = 0;
+
+         (appData.evaluaciones || []).forEach(e => {
+             const nota = e.notas.find(n => parseInt(n.alumnoIdx) === parseInt(index));
+             if (nota && nota.val !== "") {
+                 const valNum = parseFloat(nota.val);
+                 if (!isNaN(valNum)) { suma += valNum; count++; }
+                 evalsHtml += `
+                     <tr>
+                         <td>${e.fecha}</td>
+                         <td>${e.campo}</td>
+                         <td>${e.actividad}</td>
+                         <td><strong>${nota.val}</strong></td>
+                         <td>${nota.obs || '-'}</td>
+                     </tr>
+                 `;
+             }
+         });
+
+         document.getElementById('f-tabla-evals').innerHTML = evalsHtml || "<tr><td colspan='5'>Sin evaluaciones registradas.</td></tr>";
+         document.getElementById('f-promedio').innerText = count > 0 ? (suma / count).toFixed(1) : "--";
+     }
+
+     function renderAsistencia() {
+         const fechaInput = document.getElementById('asist-fecha');
+         if (!fechaInput.value) fechaInput.value = new Date().toISOString().split('T')[0];
+         const fecha = fechaInput.value;
+
+         if (!appData.asistencia[fecha]) appData.asistencia[fecha] = {};
+
+         const container = document.getElementById('lista-asistencia');
+         container.innerHTML = "";
+
+         appData.alumnos.forEach((a, i) => {
+             const st = appData.asistencia[fecha][i] || 'P';
+             container.innerHTML += `
+                 <div class="asist-row">
+                     <span>${i + 1}. ${a.nombre}</span>
+                     <div class="asist-buttons">
+                         <button class="btn-st ${st==='P'?'active-P':''}" onclick="setAsist('${fecha}', ${i}, 'P')">P</button>
+                         <button class="btn-st ${st==='F'?'active-F':''}" onclick="setAsist('${fecha}', ${i}, 'F')">F</button>
+                         <button class="btn-st ${st==='R'?'active-R':''}" onclick="setAsist('${fecha}', ${i}, 'R')">R</button>
+                         <button class="btn-st ${st==='J'?'active-J':''}" onclick="setAsist('${fecha}', ${i}, 'J')">J</button>
+                     </div>
+                 </div>
+             `;
+         });
+     }
+
+     function setAsist(fecha, alumnoIdx, st) {
+         appData.asistencia[fecha][alumnoIdx] = st;
+         renderAsistencia();
+     }
+
+     function guardarAsistencia() {
+         guardarDatos();
+         alert("Asistencia guardada correctamente.");
+     }
+
+     function actualizarContenidos() {
+         const campo = document.getElementById('eval-campo').value;
+         const selectContenido = document.getElementById('eval-contenido');
+         selectContenido.innerHTML = "";
+
+         if (catalogoNEM[campo]) {
+             Object.keys(catalogoNEM[campo]).forEach(cont => {
+                 selectContenido.innerHTML += `<option value="${cont}">${cont}</option>`;
+             });
+         }
+         actualizarPDA();
+     }
+
+     function actualizarPDA() {
+         const campo = document.getElementById('eval-campo').value;
+         const contenido = document.getElementById('eval-contenido').value;
+         const selectPDA = document.getElementById('eval-pda');
+         selectPDA.innerHTML = "";
+
+         if (catalogoNEM[campo] && catalogoNEM[campo][contenido]) {
+             catalogoNEM[campo][contenido].forEach(pda => {
+                 selectPDA.innerHTML += `<option value="${pda}">${pda}</option>`;
+             });
+         }
+     }
+
+     function renderFormEvaluacion() {
+         const tbody = document.getElementById('tabla-eval');
+         tbody.innerHTML = "";
+
+         appData.alumnos.forEach((a, i) => {
+             tbody.innerHTML += `
+                 <tr>
+                     <td>${a.nombre}</td>
+                     <td><input type="number" min="1" max="10" step="0.1" class="eval-val" data-idx="${i}" style="margin:0;"></td>
+                     <td><input type="text" class="eval-obs" data-idx="${i}" placeholder="Comentario..." style="margin:0;"></td>
+                 </tr>
+             `;
+         });
+     }
+
+     function guardarEvaluacion() {
+         const campo = document.getElementById('eval-campo').value;
+         const contenido = document.getElementById('eval-contenido').value;
+         const pda = document.getElementById('eval-pda').value;
+         const actividadTexto = document.getElementById('eval-actividad').value.trim();
+
+         if (!contenido || !pda) return alert("Selecciona un Contenido y un PDA válidos.");
+
+         const actividadCompleta = `Contenido: ${contenido} | PDA: ${pda}` + (actividadTexto ? ` | Detalle: ${actividadTexto}` : "");
+
+         const notas = [];
+         const vals = document.querySelectorAll('.eval-val');
+         const obss = document.querySelectorAll('.eval-obs');
+
+         vals.forEach((vInput, i) => {
+             notas.push({
+                 alumnoIdx: vInput.dataset.idx,
+                 val: vInput.value,
+                 obs: obss[i].value
+             });
+         });
+
+         appData.evaluaciones.push({
+             fecha: new Date().toLocaleDateString(),
+             campo,
+             actividad: actividadCompleta,
+             notas
+         });
+
+         guardarDatos();
+         alert("Evaluación registrada exitosamente.");
+         document.getElementById('eval-actividad').value = "";
+         renderFormEvaluacion();
+     }
+
+     function setupDiario() {
+         document.getElementById('diario-fecha').value = new Date().toISOString().split('T')[0];
+     }
+
+     function guardarDiario() {
+         const fecha = document.getElementById('diario-fecha').value;
+         const tema = document.getElementById('diario-tema').value.trim();
+         const texto = document.getElementById('diario-texto').value.trim();
+
+         if (!tema || !texto) return alert("Completa el tema y las notas.");
+
+         appData.diario.push({ fecha, tema, texto });
+         guardarDatos();
+         alert("Diario guardado correctamente.");
+         document.getElementById('diario-tema').value = "";
+         document.getElementById('diario-texto').value = "";
+     }
+
+     function exportarCSV() {
+         let csv = "Alumno,Promedio Evaluaciones\n";
+         appData.alumnos.forEach((a, i) => {
+             let suma = 0, count = 0;
+             appData.evaluaciones.forEach(e => {
+                 const nota = e.notas.find(n => parseInt(n.alumnoIdx) === i);
+                 if (nota && nota.val) {
+                     const val = parseFloat(nota.val);
+                     if (!isNaN(val)) { suma += val; count++; }
+                 }
+             });
+             const prom = count > 0 ? (suma / count).toFixed(1) : "N/A";
+             csv += `"${a.nombre}",${prom}\n`;
+         });
+
+         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+         const url = URL.createObjectURL(blob);
+         const a = document.createElement('a');
+         a.href = url;
+         a.download = `Calificaciones_Grado${gradoActual}.csv`;
+         a.click();
+     }
+
+     function exportarJSON() {
+         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+         const downloadAnchor = document.createElement('a');
+         downloadAnchor.setAttribute("href", dataStr);
+         downloadAnchor.setAttribute("download", `CuadernoDocente_Respaldo_Grado${gradoActual}.json`);
+         document.body.appendChild(downloadAnchor);
+         downloadAnchor.click();
+         downloadAnchor.remove();
+     }
+ </script>
+</body>
+</html>
